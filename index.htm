@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicatie Berekeningen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .buttons {
+            width: 30%;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .buttons button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #4CAF50; /* Ana buton rengi */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .buttons button:hover {
+            background-color: #45a049;
+        }
+        .buttons button.child {
+            background-color: #2196F3; /* Çocuk buton rengi */
+        }
+        .buttons button.child:hover {
+            background-color: #1976D2;
+        }
+        .form-container {
+            width: 60%;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .buttons, .form-container {
+                width: 90%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Linker panel -->
+        <div class="buttons">
+            <button id="btn1">Hoeveel milligram wordt er geïnjecteerd?</button>
+            <div id="btn1-child-buttons" style="display:none;">
+                <button id="btn1a" class="child">Injectie Per ML Berekening</button>
+                <button id="btn1b" class="child">Injectie Totaal Berekening</button>
+            </div>
+
+            <button id="btn2">Hoeveel tabletten moeten er worden gegeven?</button>
+        </div>
+
+        <!-- Rechter panel -->
+        <div class="form-container" id="form-container" style="display:none;">
+            <div id="form1" style="display:none;">
+                <h3>Per ML Berekening</h3>
+                <input type="number" id="mgPerMl" placeholder="Hoeveel mg zit er in 1 ml?" />
+                <input type="number" id="targetDose" placeholder="Benodigde dosis (mg)?" />
+                <button onclick="calculateInjection()">Berekenen</button>
+                <p id="result" class="result"></p>
+            </div>
+
+            <div id="form2" style="display:none;">
+                <h3>Totaal Berekening</h3>
+                <input type="number" id="bottleMl" placeholder="Totaal ML?" />
+                <input type="number" id="mgInBottle" placeholder="Totaal MG?" />
+                <input type="number" id="bottleDose" placeholder="Benodigde dosis voor patiënt (mg)?" />
+                <button onclick="calculateInjectionBottle()">Berekenen</button>
+                <p id="result2" class="result"></p>
+            </div>
+
+            <div id="form3" style="display:none;">
+                <h3>Tabletten Berekening</h3>
+                <input type="number" id="mgPerTablet" placeholder="1 tablet bevat hoeveel mg?" />
+                <input type="number" id="tabletDose" placeholder="Benodigde dosis voor patiënt (mg)?" />
+                <button onclick="calculateTablets()">Bereken Aantal Tabletten</button>
+                <p id="result3" class="result"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Eerste hoofdknop klikken
+        document.getElementById('btn1').addEventListener('click', function () {
+            let childButtons = document.getElementById('btn1-child-buttons');
+            // Als de kindknoppen verborgen zijn, open ze dan
+            if (childButtons.style.display === "none" || childButtons.style.display === "") {
+                childButtons.style.display = "block";
+            } else {
+                childButtons.style.display = "none";
+            }
+
+            // Verberg andere formulierelementen
+            document.getElementById('form-container').style.display = 'none';
+        });
+
+        // Injectie Berekening formulier tonen
+        document.getElementById('btn1a').addEventListener('click', function () {
+            document.getElementById('form-container').style.display = 'block';
+            document.getElementById('form1').style.display = 'block';
+            document.getElementById('form2').style.display = 'none';
+            document.getElementById('form3').style.display = 'none';
+        });
+
+        // Injectie Fles Berekening formulier tonen
+        document.getElementById('btn1b').addEventListener('click', function () {
+            document.getElementById('form-container').style.display = 'block';
+            document.getElementById('form2').style.display = 'block';
+            document.getElementById('form1').style.display = 'none';
+            document.getElementById('form3').style.display = 'none';
+        });
+
+        // Tweede hoofdknop klikken (Tabletten Berekening)
+        document.getElementById('btn2').addEventListener('click', function () {
+            document.getElementById('form-container').style.display = 'block';
+            document.getElementById('form3').style.display = 'block';
+            document.getElementById('form1').style.display = 'none';
+            document.getElementById('form2').style.display = 'none';
+        });
+
+        // Injectie berekeningsfunctie
+        function calculateInjection() {
+            const mgPerMl = parseFloat(document.getElementById('mgPerMl').value);
+            const targetDose = parseFloat(document.getElementById('targetDose').value);
+
+            if (isNaN(mgPerMl) || isNaN(targetDose) || mgPerMl <= 0 || targetDose <= 0) {
+                document.getElementById('result').innerText = 'Voer geldige waarden in.';
+                return;
+            }
+
+            const requiredMl = targetDose / mgPerMl;
+            document.getElementById('result').innerText = `De patiënt moet ${requiredMl.toFixed(2)} ml krijgen.`;
+        }
+
+        // Injectie Fles hesaplama fonksiyonu
+        function calculateInjectionBottle() {
+            const bottleMl = parseFloat(document.getElementById('bottleMl').value);
+            const mgInBottle = parseFloat(document.getElementById('mgInBottle').value);
+            const bottleDose = parseFloat(document.getElementById('bottleDose').value);
+
+            if (isNaN(bottleMl) || isNaN(mgInBottle) || isNaN(bottleDose) || bottleMl <= 0 || mgInBottle <= 0 || bottleDose <= 0) {
+                document.getElementById('result2').innerText = 'Voer geldige waarden in.';
+                return;
+            }
+
+            const requiredMl = (bottleDose / mgInBottle) * bottleMl;
+            document.getElementById('result2').innerText = `De patiënt moet ${requiredMl.toFixed(2)} ml krijgen.`;
+        }
+
+        // Tabletten hesaplama fonksiyonu
+        function calculateTablets() {
+            const mgPerTablet = parseFloat(document.getElementById('mgPerTablet').value);
+            const tabletDose = parseFloat(document.getElementById('tabletDose').value);
+
+            if (isNaN(mgPerTablet) || isNaN(tabletDose) || mgPerTablet <= 0 || tabletDose <= 0) {
+                document.getElementById('result3').innerText = 'Voer geldige waarden in.';
+                return;
+            }
+
+            const requiredTablets = tabletDose / mgPerTablet;
+            document.getElementById('result3').innerText = `De patiënt moet ${Math.ceil(requiredTablets)} tablet(ten) krijgen.`;
+        }
+    </script>
+</body>
+</html>
